@@ -1999,6 +1999,8 @@ Mavlink::task_main(int argc, char *argv[])
 
 	}
 
+    configure_stream("PESTICIDES", 1.0f);
+
 	switch (_mode) {
 	case MAVLINK_MODE_NORMAL:
 		configure_stream("SYS_STATUS", 1.0f);

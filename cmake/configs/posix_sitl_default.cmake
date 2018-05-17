@@ -68,6 +68,7 @@ set(config_module_list
 	modules/load_mon
 	modules/mavlink
 	modules/navigator
+    modules/pesticides
 	modules/replay
 	modules/simulator
 	#modules/uavcan
@@ -145,6 +146,8 @@ set(config_module_list
 
 	# Hardware test
 	#examples/hwtest
+
+    examples/pesticides_app
 )
 
 # Default config_sitl_rcS_dir (posix_sitl_default), this is overwritten later

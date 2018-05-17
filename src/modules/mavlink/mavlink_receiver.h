@@ -80,6 +80,8 @@
 #include <uORB/topics/collision_report.h>
 #include <uORB/topics/obstacle_distance.h>
 
+#include <uORB/topics/pesticides.h>
+
 #include "mavlink_mission.h"
 #include "mavlink_parameters.h"
 #include "mavlink_ftp.h"
@@ -159,6 +161,7 @@ private:
 	void handle_message_named_value_float(mavlink_message_t *msg);
 	void handle_message_debug(mavlink_message_t *msg);
 	void handle_message_debug_vect(mavlink_message_t *msg);
+	void handle_message_pesticides_msg(mavlink_message_t *msg);
 
 	void *receive_thread(void *arg);
 
@@ -250,6 +253,7 @@ private:
 	struct map_projection_reference_s _hil_local_proj_ref;
 	struct offboard_control_mode_s _offboard_control_mode;
 	int	_orb_class_instance;
+	orb_advert_t _pesticides_pub;
 
 	static constexpr unsigned MOM_SWITCH_COUNT = 8;
 

@@ -340,6 +340,10 @@ MavlinkReceiver::handle_message(mavlink_message_t *msg)
 		handle_message_debug_vect(msg);
 		break;
 
+	case MAVLINK_MSG_ID_PESTICIDES:
+		handle_message_pesticides_msg(msg);
+		break;
+
 	default:
 		break;
 	}
@@ -2390,6 +2394,33 @@ void MavlinkReceiver::handle_message_debug_vect(mavlink_message_t *msg)
 		orb_publish(ORB_ID(debug_vect), _debug_vect_pub, &debug_topic);
 	}
 }
+
+void MavlinkReceiver::handle_message_pesticides_msg(mavlink_message_t *msg)
+{
+	//parse data from mavlink, mavlink data(mavlink_pesticides_t)
+	mavlink_pesticides_t pesticides;
+	mavlink_msg_pesticides_decode(msg, &pesticides);
+
+	//innner use strct pesticides_s
+	struct pesticides_s _report = {};
+
+	//get data from topic
+	_report.timestamp = hrt_absolute_time();
+	_report.opened = pesticides.opened > 0 ? true : false;
+	_report.capacity = pesticides.capacity;
+	_report.duty = pesticides.duty;
+
+	PX4_INFO("handle_message_pesticides_msg opened = %d, capacity = %d, duty = %d", _report.opened, _report.capacity, _report.duty);
+
+	if(_pesticides_pub == nullptr) {
+		//init _pesticides_pub
+		_pesticides_pub = orb_advertise(ORB_ID(pesticides), &_report);
+	} else {
+		//publish "pesticides" topic inner NUXTTX
+		orb_publish(ORB_ID(pesticides), _pesticides_pub, &_report);
+	}
+}
+
 
 /**
  * Receive data from UART.

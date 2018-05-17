@@ -93,6 +93,7 @@ set(config_module_list
 	modules/land_detector
 	modules/load_mon
 	modules/mavlink
+    modules/pesticides
 	modules/navigator
 	modules/uavcan
 
@@ -161,4 +162,6 @@ set(config_module_list
 
 	# Hardware test
 	examples/hwtest
+
+    examples/pesticides_app
 )

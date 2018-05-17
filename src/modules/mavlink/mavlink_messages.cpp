@@ -108,6 +108,8 @@
 #include <uORB/topics/vehicle_magnetometer.h>
 #include <uORB/uORB.h>
 
+#include <uORB/topics/pesticides.h>
+
 static uint16_t cm_uint16_from_m_float(float m);
 
 static void get_mavlink_mode_state(const struct vehicle_status_s *const status, uint8_t *mavlink_state,
@@ -356,7 +358,7 @@ protected:
 		get_mavlink_mode_state(&status, &system_status, &base_mode, &custom_mode);
 
 		mavlink_msg_heartbeat_send(_mavlink->get_channel(), _mavlink->get_system_type(), MAV_AUTOPILOT_PX4,
-					   base_mode, custom_mode, system_status);
+					   base_mode, custom_mode, system_status, 0);
 
 		return true;
 	}
@@ -4128,6 +4130,95 @@ protected:
 	}
 };
 
+class MavlinkStreamPesticides : public MavlinkStream
+{
+public:
+	const char *get_name() const
+	{
+		return MavlinkStreamPesticides::get_name_static();
+	}
+
+	static const char *get_name_static()
+	{
+		return "PESTICIDES";
+	}
+
+	static uint16_t get_id_static()
+	{
+		return MAVLINK_MSG_ID_PESTICIDES;
+	}
+
+	uint16_t get_id()
+	{
+		return get_id_static();
+	}
+
+	static MavlinkStream *new_instance(Mavlink *mavlink)
+	{
+		return new MavlinkStreamPesticides(mavlink);
+	}
+
+	unsigned get_size()
+	{
+		return MAVLINK_MSG_ID_PESTICIDES_LEN + MAVLINK_NUM_NON_PAYLOAD_BYTES;
+	}
+
+private:
+	MavlinkOrbSubscription *_pesticides_sub;
+
+	/* do not allow top copying this class */
+	MavlinkStreamPesticides(MavlinkStreamPesticides &);
+	MavlinkStreamPesticides &operator = (const MavlinkStreamPesticides &);
+
+protected:
+	explicit MavlinkStreamPesticides(Mavlink *mavlink) : MavlinkStream(mavlink),
+		_pesticides_sub(_mavlink->add_orb_subscription(ORB_ID(pesticides)))
+	{}
+
+	bool send(const hrt_abstime t)
+	{
+		#if 1
+		struct pesticides_s _msg;
+		if (_pesticides_sub->update(&_msg)) {
+			mavlink_pesticides_t msg = {};
+
+			msg.opened = _msg.opened ? 1 : 0;
+			msg.capacity = _msg.capacity;
+			msg.duty = _msg.duty;
+
+			// PX4_INFO("pesticides opened = %d, capacity = %d, duty = %d", msg.opened, msg.capacity, msg.duty);
+
+			// #if 1
+			// mavlink_message_t msg_;
+        	// mavlink_msg_pesticides_pack_chan(255, 0, _mavlink->get_channel(), &msg_, 1, 50, 10);
+			// uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
+			// uint16_t len = mavlink_msg_to_send_buffer(buffer, &msg_);
+			// mavlink_status_t status;
+			// mavlink_message_t message;
+			// PX4_INFO("pesticides len = %d", len);
+			// for (int position = 0; position < len; position++) {
+			// 	uint8_t decodeState = mavlink_parse_char(_mavlink->get_channel(), (uint8_t)(buffer[position]), &message, &status);
+
+			// 	PX4_INFO("mavlink_receiver::receive_thread decodeState = %d", decodeState);
+			// }
+			// #endif
+
+			mavlink_msg_pesticides_send_struct(_mavlink->get_channel(), &msg);
+			return true;
+		}
+		#else
+			//for test
+			// mavlink_pesticides_t msg = {0, 100, 0};
+			// mavlink_msg_pesticides_send_struct(_mavlink->get_channel(), &msg);
+			mavlink_msg_pesticides_send(_mavlink->get_channel(), 0, 0, 0);
+			return true;
+		#endif
+
+		return false;
+	}
+};
+
+
 static const StreamListItem streams_list[] = {
 	StreamListItem(&MavlinkStreamHeartbeat::new_instance, &MavlinkStreamHeartbeat::get_name_static, &MavlinkStreamHeartbeat::get_id_static),
 	StreamListItem(&MavlinkStreamStatustext::new_instance, &MavlinkStreamStatustext::get_name_static, &MavlinkStreamStatustext::get_id_static),
@@ -4179,7 +4270,8 @@ static const StreamListItem streams_list[] = {
 	StreamListItem(&MavlinkStreamMountOrientation::new_instance, &MavlinkStreamMountOrientation::get_name_static, &MavlinkStreamMountOrientation::get_id_static),
 	StreamListItem(&MavlinkStreamHighLatency2::new_instance, &MavlinkStreamHighLatency2::get_name_static, &MavlinkStreamHighLatency2::get_id_static),
 	StreamListItem(&MavlinkStreamGroundTruth::new_instance, &MavlinkStreamGroundTruth::get_name_static, &MavlinkStreamGroundTruth::get_id_static),
-	StreamListItem(&MavlinkStreamPing::new_instance, &MavlinkStreamPing::get_name_static, &MavlinkStreamPing::get_id_static)
+	StreamListItem(&MavlinkStreamPing::new_instance, &MavlinkStreamPing::get_name_static, &MavlinkStreamPing::get_id_static),
+	StreamListItem(&MavlinkStreamPesticides::new_instance, &MavlinkStreamPesticides::get_name_static, &MavlinkStreamPesticides::get_id_static)
 };
 
 const char *get_stream_name(const uint16_t msg_id)
